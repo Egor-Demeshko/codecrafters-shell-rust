@@ -1,6 +1,14 @@
-use std::io::{self, Write};
+use std::{io::stdin, process::exit};
 
 fn main() {
-    print!("$ ");
-    io::stdout().flush().unwrap();
+    let mut buffer = String::new();
+    match stdin().read_line(&mut buffer) {
+        Ok(_) => {
+            println!("{}: command not found", buffer.trim());
+        }
+        Err(err) => {
+            println!("{err}");
+        }
+    }
+    exit(1);
 }

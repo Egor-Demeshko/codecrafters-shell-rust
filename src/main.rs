@@ -15,9 +15,12 @@ fn main() {
             }
         };
 
-        match command {
+        let argv: Vec<&str> = command.split(' ').collect();
+
+        match argv[0] {
             "exit" => exit(127),
-            _ => println!("{}: command not found", command),
+            "echo" => echo_command(argv),
+            _ => println!("{}: command not found", argv[0]),
         }
     }
 }
@@ -31,4 +34,9 @@ fn output(text: &str) {
             exit(1);
         }
     }
+}
+
+fn echo_command(argv: Vec<&str>) {
+    let text = argv[1..argv.len()].join(" ");
+    output(format!("{text}\n",).as_str());
 }

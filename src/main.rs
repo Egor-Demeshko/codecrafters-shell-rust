@@ -18,7 +18,7 @@ fn main() {
         };
 
         match command {
-            "exit" => exit(1),
+            "exit" => exit(127),
             _ => println!("{}: command not found", command),
         }
     }

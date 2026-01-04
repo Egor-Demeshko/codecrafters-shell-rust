@@ -11,7 +11,7 @@ pub const COMMAND_LIST: [&str; 3] = [TYPE_COMMAND, EXIT_COMMAND, ECHO_COMMAND];
 
 pub fn execute_command(argv: Vec<String>) {
     match argv[0].as_str() {
-        EXIT_COMMAND => exit_command::execute(1),
+        EXIT_COMMAND => exit_command::execute(127),
         ECHO_COMMAND => echo_command::execute(argv),
         TYPE_COMMAND => type_command::execute(argv, Vec::from(COMMAND_LIST)),
         _ => command_not_found(&argv[0]),

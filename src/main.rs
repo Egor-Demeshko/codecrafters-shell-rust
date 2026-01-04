@@ -1,4 +1,5 @@
 use std::{
+    default,
     io::{Write, stdin, stdout},
     process::exit,
 };
@@ -8,13 +9,17 @@ fn main() {
         print!("$ ");
         stdout().flush().unwrap();
         let mut buffer = String::new();
-        match stdin().read_line(&mut buffer) {
-            Ok(_) => {
-                println!("{}: command not found", buffer.trim());
-            }
+        let command = match stdin().read_line(&mut buffer) {
+            Ok(_) => buffer.trim(),
             Err(err) => {
                 println!("{err}");
+                exit(1);
             }
+        };
+
+        match command {
+            "exit" => exit(1),
+            _ => println!("{}: command not found", command),
         }
     }
 }

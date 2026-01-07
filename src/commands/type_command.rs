@@ -3,7 +3,7 @@ use std::{
     env,
     fs::{self},
     os::unix::fs::PermissionsExt,
-    path::Path,
+    path::{MAIN_SEPARATOR, Path},
 };
 
 pub fn execute(argv: Vec<String>, command_list: Vec<&str>) -> () {
@@ -65,6 +65,13 @@ fn search_path(dir: &Path, command: &str) -> Option<String> {
     let address = dir.join(command);
     let full_address = address.as_path();
     if !full_address.is_file() {
+        return None;
+    }
+
+    if !full_address.starts_with(format!(
+        "{MAIN_SEPARATOR}{}",
+        ["usr", "bin"].join(MAIN_SEPARATOR.to_string().as_str())
+    )) {
         return None;
     }
 

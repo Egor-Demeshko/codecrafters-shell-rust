@@ -35,7 +35,7 @@ pub fn execute(argv: Vec<String>, command_list: Vec<&str>) -> () {
 fn search_in_path(command: &str) -> Option<String> {
     match env::var("PATH") {
         Ok(routes) => {
-            let mut shortest_path = String::new();
+            let mut all_path: Vec<String> = vec![];
             for route in env::split_paths(&routes) {
                 if route.as_os_str().is_empty() {
                     continue;
@@ -47,15 +47,27 @@ fn search_in_path(command: &str) -> Option<String> {
                 if text.is_empty() {
                     continue;
                 }
-                if shortest_path.is_empty() || shortest_path.len() > text.len() {
-                    shortest_path = text;
+                all_path.push(text);
+            }
+
+            if all_path.is_empty() {
+                return None;
+            }
+
+            for path in all_path.iter() {
+                // /usr/bin route
+                if path.starts_with(
+                    format!(
+                        "{MAIN_SEPARATOR}{}",
+                        ["usr", "bin"].join(MAIN_SEPARATOR.to_string().as_str())
+                    )
+                    .as_str(),
+                ) {
+                    return Some(format!("{} is {}\n", command, path));
                 }
             }
 
-            if shortest_path.is_empty() {
-                return None;
-            }
-            Some(format!("{} is {}\n", command, shortest_path))
+            Some(format!("{} is {}\n", command, all_path[0]))
         }
         Err(_) => None,
     }
@@ -65,13 +77,6 @@ fn search_path(dir: &Path, command: &str) -> Option<String> {
     let address = dir.join(command);
     let full_address = address.as_path();
     if !full_address.is_file() {
-        return None;
-    }
-
-    if !full_address.starts_with(format!(
-        "{MAIN_SEPARATOR}{}",
-        ["usr", "bin"].join(MAIN_SEPARATOR.to_string().as_str())
-    )) {
         return None;
     }
 

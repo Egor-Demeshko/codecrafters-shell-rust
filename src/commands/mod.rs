@@ -48,7 +48,15 @@ fn try_in_path(argv: Vec<String>) -> () {
         }
     };
 
-    let result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}")).status();
+    let result: Result<std::process::ExitStatus, std::io::Error>;
+    if argv.len() > 1 {
+        result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}"))
+            .args(&argv[1..argv.len()])
+            .status();
+    } else {
+        result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}")).status();
+    }
+
     exit(result.unwrap().code().unwrap_or(0))
 }
 

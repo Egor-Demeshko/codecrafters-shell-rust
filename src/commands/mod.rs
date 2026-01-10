@@ -1,15 +1,17 @@
 mod echo_command;
 mod exit_command;
+mod pwd_command;
 mod type_command;
 use std::{
-    io::{stderr, stdin},
-    path::{MAIN_SEPARATOR, Path},
-    process::{Command, Stdio, exit},
+    io::stdin,
+    path::Path,
+    process::{Command, exit},
 };
 
 pub const TYPE_COMMAND: &str = "type";
 pub const EXIT_COMMAND: &str = "exit";
 pub const ECHO_COMMAND: &str = "echo";
+pub const PWD_COMMAND: &str = "pwd";
 
 pub const COMMAND_LIST: [&str; 3] = [TYPE_COMMAND, EXIT_COMMAND, ECHO_COMMAND];
 
@@ -18,6 +20,7 @@ pub fn execute_command(argv: Vec<String>) {
         EXIT_COMMAND => exit_command::execute(127),
         ECHO_COMMAND => echo_command::execute(argv),
         TYPE_COMMAND => type_command::execute(argv, Vec::from(COMMAND_LIST)),
+        PWD_COMMAND => pwd_command::execute(),
         _ => try_in_path(argv),
     }
 }

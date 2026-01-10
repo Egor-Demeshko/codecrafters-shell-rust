@@ -21,18 +21,18 @@ pub fn execute(argv: Vec<String>, command_list: Vec<&str>) -> () {
         None => (),
     }
 
-    match search_in_path(command_name) {
-        Some(path) => {
-            output(path.as_str());
+    let found_path = match search_in_path(command_name) {
+        Some(path) => path,
+        None => {
+            println!("{command_name}: not found");
             return;
         }
-        None => (),
-    }
+    };
 
-    println!("{command_name}: not found");
+    output(format!("{} is {}\n", command_name, found_path.as_str()).as_str());
 }
 
-fn search_in_path(command: &str) -> Option<String> {
+pub fn search_in_path(command: &str) -> Option<String> {
     match env::var("PATH") {
         Ok(routes) => {
             let mut all_path: Vec<String> = vec![];
@@ -55,7 +55,6 @@ fn search_in_path(command: &str) -> Option<String> {
             }
 
             for path in all_path.iter() {
-                // /usr/bin route
                 if path.starts_with(
                     format!(
                         "{MAIN_SEPARATOR}{}",
@@ -63,11 +62,11 @@ fn search_in_path(command: &str) -> Option<String> {
                     )
                     .as_str(),
                 ) {
-                    return Some(format!("{} is {}\n", command, path));
+                    return Some(path.clone());
                 }
             }
 
-            Some(format!("{} is {}\n", command, all_path[0]))
+            Some(all_path[0].clone())
         }
         Err(_) => None,
     }

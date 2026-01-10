@@ -1,7 +1,11 @@
 mod echo_command;
 mod exit_command;
 mod type_command;
-use std::{io::stdin, process::exit};
+use std::{
+    io::stdin,
+    path::MAIN_SEPARATOR,
+    process::{Command, Stdio, exit},
+};
 
 pub const TYPE_COMMAND: &str = "type";
 pub const EXIT_COMMAND: &str = "exit";
@@ -14,7 +18,7 @@ pub fn execute_command(argv: Vec<String>) {
         EXIT_COMMAND => exit_command::execute(127),
         ECHO_COMMAND => echo_command::execute(argv),
         TYPE_COMMAND => type_command::execute(argv, Vec::from(COMMAND_LIST)),
-        _ => command_not_found(&argv[0]),
+        _ => try_in_path(argv),
     }
 }
 
@@ -32,6 +36,20 @@ pub fn get_command() -> Vec<String> {
         .split(' ')
         .map(|str: &str| String::from(str))
         .collect()
+}
+
+fn try_in_path(argv: Vec<String>) -> () {
+    let command_name = &argv[0];
+    let path: String = match type_command::search_in_path(command_name.as_str()) {
+        Some(path) => path,
+        None => {
+            command_not_found(command_name.as_str());
+            return;
+        }
+    };
+
+    let result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}")).status();
+    exit(result.unwrap().code().unwrap_or(0))
 }
 
 fn command_not_found(text: &str) -> () {

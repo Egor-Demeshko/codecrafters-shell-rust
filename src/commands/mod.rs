@@ -13,7 +13,7 @@ pub const EXIT_COMMAND: &str = "exit";
 pub const ECHO_COMMAND: &str = "echo";
 pub const PWD_COMMAND: &str = "pwd";
 
-pub const COMMAND_LIST: [&str; 3] = [TYPE_COMMAND, EXIT_COMMAND, ECHO_COMMAND];
+pub const COMMAND_LIST: [&str; 4] = [TYPE_COMMAND, EXIT_COMMAND, ECHO_COMMAND, PWD_COMMAND];
 
 pub fn execute_command(argv: Vec<String>) {
     match argv[0].as_str() {

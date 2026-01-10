@@ -62,10 +62,9 @@ fn try_in_path(argv: Vec<String>) -> () {
     }
 
     if result.is_ok() {
-        exit(result.unwrap().code().unwrap_or(0))
+        return;
     } else {
         println!("{}", result.err().unwrap());
-        exit(1)
     }
 }
 

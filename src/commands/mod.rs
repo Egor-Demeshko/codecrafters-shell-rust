@@ -3,7 +3,7 @@ mod exit_command;
 mod type_command;
 use std::{
     io::{stderr, stdin},
-    path::MAIN_SEPARATOR,
+    path::{MAIN_SEPARATOR, Path},
     process::{Command, Stdio, exit},
 };
 
@@ -48,11 +48,17 @@ fn try_in_path(argv: Vec<String>) -> () {
         }
     };
 
+    let path = path.replace(command_name, "");
+    let dir = Path::new(&path);
+
     let result: Result<std::process::ExitStatus, std::io::Error>;
     if argv.len() > 1 {
-        result = Command::new(path).args(argv).status();
+        result = Command::new(&path)
+            .current_dir(dir)
+            .args(&argv[1..argv.len()])
+            .status();
     } else {
-        result = Command::new(path).status();
+        result = Command::new(&path).current_dir(dir).status();
     }
 
     if result.is_ok() {

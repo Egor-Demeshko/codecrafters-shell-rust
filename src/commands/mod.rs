@@ -49,9 +49,8 @@ fn try_in_path(argv: Vec<String>) -> () {
     };
 
     let result: Result<std::process::ExitStatus, std::io::Error>;
-
     if argv.len() > 1 {
-        result = Command::new(path).args(&argv[1..argv.len()]).status();
+        result = Command::new(path).args(argv).status();
     } else {
         result = Command::new(path).status();
     }

@@ -2,7 +2,7 @@ mod echo_command;
 mod exit_command;
 mod type_command;
 use std::{
-    io::stdin,
+    io::{stderr, stdin},
     path::MAIN_SEPARATOR,
     process::{Command, Stdio, exit},
 };
@@ -49,15 +49,19 @@ fn try_in_path(argv: Vec<String>) -> () {
     };
 
     let result: Result<std::process::ExitStatus, std::io::Error>;
+
     if argv.len() > 1 {
-        result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}"))
-            .args(&argv[1..argv.len()])
-            .status();
+        result = Command::new(path).args(&argv[1..argv.len()]).status();
     } else {
-        result = Command::new(format!("{path}{MAIN_SEPARATOR}{command_name}")).status();
+        result = Command::new(path).status();
     }
 
-    exit(result.unwrap().code().unwrap_or(0))
+    if result.is_ok() {
+        exit(result.unwrap().code().unwrap_or(0))
+    } else {
+        println!("{}", result.err().unwrap());
+        exit(1)
+    }
 }
 
 fn command_not_found(text: &str) -> () {

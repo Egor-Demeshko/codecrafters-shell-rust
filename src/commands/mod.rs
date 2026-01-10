@@ -53,12 +53,12 @@ fn try_in_path(argv: Vec<String>) -> () {
 
     let result: Result<std::process::ExitStatus, std::io::Error>;
     if argv.len() > 1 {
-        result = Command::new(&path)
+        result = Command::new(command_name)
             .current_dir(dir)
             .args(&argv[1..argv.len()])
             .status();
     } else {
-        result = Command::new(&path).current_dir(dir).status();
+        result = Command::new(command_name).current_dir(dir).status();
     }
 
     if result.is_ok() {

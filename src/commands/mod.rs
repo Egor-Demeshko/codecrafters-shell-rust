@@ -1,7 +1,9 @@
+mod cd_command;
 mod echo_command;
 mod exit_command;
 mod pwd_command;
 mod type_command;
+
 use std::{
     io::stdin,
     path::Path,
@@ -12,8 +14,15 @@ pub const TYPE_COMMAND: &str = "type";
 pub const EXIT_COMMAND: &str = "exit";
 pub const ECHO_COMMAND: &str = "echo";
 pub const PWD_COMMAND: &str = "pwd";
+pub const CD_COMMAND: &str = "cd";
 
-pub const COMMAND_LIST: [&str; 4] = [TYPE_COMMAND, EXIT_COMMAND, ECHO_COMMAND, PWD_COMMAND];
+pub const COMMAND_LIST: [&str; 5] = [
+    TYPE_COMMAND,
+    EXIT_COMMAND,
+    ECHO_COMMAND,
+    PWD_COMMAND,
+    CD_COMMAND,
+];
 
 pub fn execute_command(argv: Vec<String>) {
     match argv[0].as_str() {
@@ -21,6 +30,7 @@ pub fn execute_command(argv: Vec<String>) {
         ECHO_COMMAND => echo_command::execute(argv),
         TYPE_COMMAND => type_command::execute(argv, Vec::from(COMMAND_LIST)),
         PWD_COMMAND => pwd_command::execute(),
+        CD_COMMAND => cd_command::execute(argv),
         _ => try_in_path(argv),
     }
 }

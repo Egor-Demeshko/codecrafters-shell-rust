@@ -23,10 +23,7 @@ pub fn execute(argv: Vec<String>) -> () {
 
     match env::set_current_dir(path) {
         Ok(result) => result,
-        Err(_) => println!(
-            "cd: <{}>: No such file or directory",
-            path.to_str().unwrap_or("")
-        ),
+        Err(e) => error_msg(e.to_string().as_str()),
     }
 }
 
@@ -39,5 +36,5 @@ fn validate_path(path: &str) -> Option<&str> {
 }
 
 fn error_msg(path: &str) {
-    println!("{}", path);
+    println!("cd: {}: No such file or directory", path);
 }

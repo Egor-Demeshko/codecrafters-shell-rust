@@ -7,13 +7,23 @@ pub fn execute(argv: Vec<String>) -> () {
         return;
     }
 
-    let validated_path = match validate_path(argv[1].as_str()) {
+    let mut validated_path = match validate_path(argv[1].as_str()) {
         Some(path) => path,
         None => {
             error_msg(argv[1].as_str());
             return;
         }
     };
+
+    if validated_path == "~" {
+        let home: String = env::var("HOME").unwrap_or(String::new());
+        if home.is_empty() {
+            error_msg("~");
+            return;
+        }
+
+        validated_path = home.leak()
+    }
 
     let path = Path::new(validated_path);
     if !path.exists() {

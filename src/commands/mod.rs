@@ -38,17 +38,35 @@ pub fn execute_command(argv: Vec<String>) {
 pub fn get_command() -> Vec<String> {
     let mut buffer = String::new();
     let command = match stdin().read_line(&mut buffer) {
-        Ok(_) => buffer.trim(),
+        Ok(_) => buffer.trim().replace("''", ""),
         Err(err) => {
             println!("{err}");
             exit(1);
         }
     };
 
-    command
-        .split(' ')
-        .map(|str: &str| String::from(str))
-        .collect()
+    let mut result = Vec::new();
+    let mut current = String::new();
+    let mut in_quotes = false;
+
+    for ch in command.chars() {
+        match (ch, in_quotes) {
+            ('\'', false) => in_quotes = true,
+            ('\'', true) => in_quotes = false,
+            (' ', false) if !current.is_empty() => {
+                result.push(current);
+                current = String::new();
+            }
+            (' ', false) => {}
+            _ => current.push(ch),
+        }
+    }
+
+    if !current.is_empty() {
+        result.push(current);
+    }
+
+    result
 }
 
 fn try_in_path(argv: Vec<String>) -> () {

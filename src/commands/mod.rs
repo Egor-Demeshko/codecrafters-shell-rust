@@ -101,12 +101,10 @@ pub fn get_command() -> Vec<String> {
 
     for ch in command.chars() {
         let active_qoute = parse_command_option.get_qoute();
-        if parse_command_option.is_next_literal() {
+        if active_qoute.is_empty() && parse_command_option.is_next_literal() {
             parse_command_option.push_to_current(ch);
             parse_command_option.set_next_literal(false);
-            continue;
-        }
-        if ch == '\\' {
+        } else if active_qoute.is_empty() && ch == '\\' {
             parse_command_option.set_next_literal(true);
         } else if active_qoute == "\"" || ch == '\"' {
             char_in_double_quoutes(ch, &mut parse_command_option);

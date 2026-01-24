@@ -164,10 +164,11 @@ fn char_in_single_quoute(ch: char, options: &mut ParseCommand) -> () {
 }
 // "exe with \'single quotes\'"
 fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
-    match (ch, options.get_next_literal()) {
+    let filter = vec!['\"', '\\', '$', '`', '\n'];
+    match (ch, options.is_next_literal(ch)) {
         ('\\', false) => {
             options.set_next_literal(true);
-            options.set_next_literal_filter(vec!['\"', '\\', '$', '\'', '\n']);
+            options.set_next_literal_filter(filter);
         }
         ('\"', false) => {
             options.reset_active_quoute();
@@ -181,10 +182,10 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
             options.push_to_current(ch);
             options.set_next_literal(false);
         }
-        ('\'', true) => {
-            options.set_next_literal(false);
-        }
         _ => {
+            if options.get_next_literal() && options.is_next_literal(ch) == false {
+                options.push_to_current('\\');
+            }
             options.push_to_current(ch);
             options.set_next_literal(false);
         }

@@ -27,6 +27,7 @@ pub const COMMAND_LIST: [&str; 5] = [
 struct ParseCommandOptions {
     current: String,
     active_quote: String,
+    next_literal: bool,
 }
 
 impl ParseCommandOptions {
@@ -34,6 +35,7 @@ impl ParseCommandOptions {
         ParseCommandOptions {
             current: String::new(),
             active_quote: String::new(),
+            next_literal: false,
         }
     }
 
@@ -63,6 +65,14 @@ impl ParseCommandOptions {
         self.reset_active_quoute();
         self.active_quote.push(ch);
     }
+
+    pub fn set_next_literal(&mut self, value: bool) -> () {
+        self.next_literal = value;
+    }
+
+    pub fn is_next_literal(&self) -> bool {
+        self.next_literal
+    }
 }
 
 pub fn execute_command(argv: Vec<String>) {
@@ -91,7 +101,14 @@ pub fn get_command() -> Vec<String> {
 
     for ch in command.chars() {
         let active_qoute = parse_command_option.get_qoute();
-        if active_qoute == "\"" || ch == '\"' {
+        if parse_command_option.is_next_literal() {
+            parse_command_option.push_to_current(ch);
+            parse_command_option.set_next_literal(false);
+            continue;
+        }
+        if ch == '\\' {
+            parse_command_option.set_next_literal(true);
+        } else if active_qoute == "\"" || ch == '\"' {
             char_in_double_quoutes(ch, &mut parse_command_option);
         } else if ch == '\'' || active_qoute == "\'" {
             char_in_single_quoute(ch, &mut parse_command_option);

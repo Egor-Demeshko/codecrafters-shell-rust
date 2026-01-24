@@ -181,6 +181,9 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
             options.push_to_current(ch);
             options.set_next_literal(false);
         }
+        ('\'', true) => {
+            options.set_next_literal(false);
+        }
         _ => {
             options.push_to_current(ch);
             options.set_next_literal(false);

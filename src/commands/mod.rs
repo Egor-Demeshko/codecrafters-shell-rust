@@ -73,7 +73,7 @@ impl ParseCommand {
     }
 
     pub fn set_next_literal(&mut self, value: bool) -> &Self {
-        self.next_literal_filter = Vec::new();
+        self.next_literal_filter.clear();
         self.next_literal = value;
         self
     }
@@ -162,7 +162,7 @@ fn char_in_single_quoute(ch: char, options: &mut ParseCommand) -> () {
         _ => options.push_to_current(ch),
     }
 }
-
+// "exe with \'single quotes\'"
 fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
     match (ch, options.get_next_literal()) {
         ('\\', false) => {
@@ -171,6 +171,7 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
         }
         ('\"', false) => {
             options.reset_active_quoute();
+            options.set_next_literal(false);
         }
         ('\\', true) => {
             options.push_to_current(ch);
@@ -180,7 +181,10 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
             options.push_to_current(ch);
             options.set_next_literal(false);
         }
-        _ => options.push_to_current(ch),
+        _ => {
+            options.push_to_current(ch);
+            options.set_next_literal(false);
+        }
     }
 }
 

@@ -28,6 +28,7 @@ struct ParseCommand {
     current: String,
     active_quote: String,
     next_literal: bool,
+    next_literal_filter: Vec<char>,
 }
 
 impl ParseCommand {
@@ -36,6 +37,7 @@ impl ParseCommand {
             current: String::new(),
             active_quote: String::new(),
             next_literal: false,
+            next_literal_filter: vec![],
         }
     }
 
@@ -57,6 +59,10 @@ impl ParseCommand {
         &self.active_quote
     }
 
+    pub fn get_next_literal(&self) -> bool {
+        self.next_literal
+    }
+
     pub fn reset_active_quoute(&mut self) -> () {
         self.active_quote.truncate(0);
     }
@@ -66,12 +72,26 @@ impl ParseCommand {
         self.active_quote.push(ch);
     }
 
-    pub fn set_next_literal(&mut self, value: bool) -> () {
+    pub fn set_next_literal(&mut self, value: bool) -> &Self {
+        self.next_literal_filter = Vec::new();
         self.next_literal = value;
+        self
     }
 
-    pub fn is_next_literal(&self) -> bool {
+    pub fn is_next_literal(&self, ch: char) -> bool {
+        if self.next_literal && !self.next_literal_filter.is_empty() {
+            return match self.next_literal_filter.iter().find(|el: &&char| -> bool {
+                if **el == ch { true } else { false }
+            }) {
+                Some(_) => true,
+                None => false,
+            };
+        }
         self.next_literal
+    }
+
+    pub fn set_next_literal_filter(&mut self, filter: Vec<char>) -> () {
+        self.next_literal_filter = filter;
     }
 }
 
@@ -120,7 +140,7 @@ pub fn get_command() -> Vec<String> {
 }
 
 fn when_active_quote_empty(ch: char, options: &mut ParseCommand, result: &mut Vec<String>) -> () {
-    if options.is_next_literal() {
+    if options.is_next_literal(ch) {
         options.push_to_current(ch);
         options.set_next_literal(false);
     } else if ch == '\\' {
@@ -137,17 +157,23 @@ fn when_active_quote_empty(ch: char, options: &mut ParseCommand, result: &mut Ve
 }
 
 fn char_in_single_quoute(ch: char, options: &mut ParseCommand) -> () {
-    match (ch, options.get_qoute() == "\'") {
-        ('\'', false) => options.set_active_qoute(ch),
-        ('\'', true) => options.reset_active_quoute(),
+    match ch {
+        '\'' => options.reset_active_quoute(),
         _ => options.push_to_current(ch),
     }
 }
 
 fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
-    match (ch, options.get_qoute() == "\"") {
-        ('\"', false) => options.set_active_qoute(ch),
-        ('\"', true) => options.reset_active_quoute(),
+    match (ch, options.get_next_literal()) {
+        ('\\', false) => {
+            options.set_next_literal(true);
+            options.set_next_literal_filter(vec!['\"', '\\', '$', '\'', '\n']);
+        }
+        ('\"', false) => options.reset_active_quoute(),
+        ('\\', true) => {
+            options.push_to_current(ch);
+            options.set_next_literal(false);
+        }
         _ => options.push_to_current(ch),
     }
 }

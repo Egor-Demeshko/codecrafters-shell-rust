@@ -24,15 +24,15 @@ pub const COMMAND_LIST: [&str; 5] = [
     CD_COMMAND,
 ];
 
-struct ParseCommandOptions {
+struct ParseCommand {
     current: String,
     active_quote: String,
     next_literal: bool,
 }
 
-impl ParseCommandOptions {
+impl ParseCommand {
     fn new() -> Self {
-        ParseCommandOptions {
+        ParseCommand {
             current: String::new(),
             active_quote: String::new(),
             next_literal: false,
@@ -97,36 +97,46 @@ pub fn get_command() -> Vec<String> {
     };
 
     let mut result = Vec::new();
-    let mut parse_command_option = ParseCommandOptions::new();
+    let mut parse_command = ParseCommand::new();
 
     for ch in command.chars() {
-        let active_qoute = parse_command_option.get_qoute();
-        if active_qoute.is_empty() && parse_command_option.is_next_literal() {
-            parse_command_option.push_to_current(ch);
-            parse_command_option.set_next_literal(false);
-        } else if active_qoute.is_empty() && ch == '\\' {
-            parse_command_option.set_next_literal(true);
-        } else if active_qoute == "\"" || ch == '\"' {
-            char_in_double_quoutes(ch, &mut parse_command_option);
-        } else if ch == '\'' || active_qoute == "\'" {
-            char_in_single_quoute(ch, &mut parse_command_option);
-        } else if ch == ' ' || ch.to_string() == "  " {
-            if !parse_command_option.get_current().is_empty() {
-                result.push(parse_command_option.get_current_mut());
-            }
+        let active_qoute = parse_command.get_qoute();
+        if active_qoute.is_empty() {
+            when_active_quote_empty(ch, &mut parse_command, &mut result);
+        } else if active_qoute == "\"" {
+            char_in_double_quoutes(ch, &mut parse_command);
+        } else if active_qoute == "\'" {
+            char_in_single_quoute(ch, &mut parse_command);
         } else {
-            parse_command_option.push_to_current(ch)
+            parse_command.push_to_current(ch)
         }
     }
 
-    if !parse_command_option.get_current().is_empty() {
-        result.push(parse_command_option.get_current_mut());
+    if !parse_command.get_current().is_empty() {
+        result.push(parse_command.get_current_mut());
     }
 
     result
 }
 
-fn char_in_single_quoute(ch: char, options: &mut ParseCommandOptions) -> () {
+fn when_active_quote_empty(ch: char, options: &mut ParseCommand, result: &mut Vec<String>) -> () {
+    if options.is_next_literal() {
+        options.push_to_current(ch);
+        options.set_next_literal(false);
+    } else if ch == '\\' {
+        options.set_next_literal(true);
+    } else if ch == '\'' || ch == '\"' {
+        options.set_active_qoute(ch);
+    } else if ch == ' ' || ch.to_string() == "  " {
+        if !options.get_current().is_empty() {
+            result.push(options.get_current_mut());
+        }
+    } else {
+        options.push_to_current(ch)
+    }
+}
+
+fn char_in_single_quoute(ch: char, options: &mut ParseCommand) -> () {
     match (ch, options.get_qoute() == "\'") {
         ('\'', false) => options.set_active_qoute(ch),
         ('\'', true) => options.reset_active_quoute(),
@@ -134,7 +144,7 @@ fn char_in_single_quoute(ch: char, options: &mut ParseCommandOptions) -> () {
     }
 }
 
-fn char_in_double_quoutes(ch: char, options: &mut ParseCommandOptions) -> () {
+fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
     match (ch, options.get_qoute() == "\"") {
         ('\"', false) => options.set_active_qoute(ch),
         ('\"', true) => options.reset_active_quoute(),

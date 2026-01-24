@@ -169,8 +169,14 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
             options.set_next_literal(true);
             options.set_next_literal_filter(vec!['\"', '\\', '$', '\'', '\n']);
         }
-        ('\"', false) => options.reset_active_quoute(),
+        ('\"', false) => {
+            options.reset_active_quoute();
+        }
         ('\\', true) => {
+            options.push_to_current(ch);
+            options.set_next_literal(false);
+        }
+        ('\"', true) => {
             options.push_to_current(ch);
             options.set_next_literal(false);
         }

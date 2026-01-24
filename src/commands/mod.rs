@@ -24,6 +24,47 @@ pub const COMMAND_LIST: [&str; 5] = [
     CD_COMMAND,
 ];
 
+struct ParseCommandOptions {
+    current: String,
+    active_quote: String,
+}
+
+impl ParseCommandOptions {
+    fn new() -> Self {
+        ParseCommandOptions {
+            current: String::new(),
+            active_quote: String::new(),
+        }
+    }
+
+    pub fn get_current(&self) -> &String {
+        &self.current
+    }
+
+    pub fn push_to_current(&mut self, ch: char) -> () {
+        self.current.push(ch);
+    }
+
+    pub fn get_current_mut(&mut self) -> String {
+        let current = self.current.clone();
+        self.current = String::new();
+        current
+    }
+
+    pub fn get_qoute(&self) -> &str {
+        &self.active_quote
+    }
+
+    pub fn reset_active_quoute(&mut self) -> () {
+        self.active_quote.truncate(0);
+    }
+
+    pub fn set_active_qoute(&mut self, ch: char) -> () {
+        self.reset_active_quoute();
+        self.active_quote.push(ch);
+    }
+}
+
 pub fn execute_command(argv: Vec<String>) {
     match argv[0].as_str() {
         EXIT_COMMAND => exit_command::execute(127),
@@ -38,7 +79,7 @@ pub fn execute_command(argv: Vec<String>) {
 pub fn get_command() -> Vec<String> {
     let mut buffer = String::new();
     let command = match stdin().read_line(&mut buffer) {
-        Ok(_) => buffer.trim().replace("''", ""),
+        Ok(_) => buffer.trim().replace("''", "").replace("\"\"", ""),
         Err(err) => {
             println!("{err}");
             exit(1);
@@ -46,27 +87,44 @@ pub fn get_command() -> Vec<String> {
     };
 
     let mut result = Vec::new();
-    let mut current = String::new();
-    let mut in_quotes = false;
+    let mut parse_command_option = ParseCommandOptions::new();
 
     for ch in command.chars() {
-        match (ch, in_quotes) {
-            ('\'', false) => in_quotes = true,
-            ('\'', true) => in_quotes = false,
-            (' ', false) if !current.is_empty() => {
-                result.push(current);
-                current = String::new();
+        let active_qoute = parse_command_option.get_qoute();
+        if active_qoute == "\"" || ch == '\"' {
+            char_in_double_quoutes(ch, &mut parse_command_option);
+        } else if ch == '\'' || active_qoute == "\'" {
+            char_in_single_quoute(ch, &mut parse_command_option);
+        } else if ch == ' ' || ch.to_string() == "  " {
+            if !parse_command_option.get_current().is_empty() {
+                result.push(parse_command_option.get_current_mut());
             }
-            (' ', false) => {}
-            _ => current.push(ch),
+        } else {
+            parse_command_option.push_to_current(ch)
         }
     }
 
-    if !current.is_empty() {
-        result.push(current);
+    if !parse_command_option.get_current().is_empty() {
+        result.push(parse_command_option.get_current_mut());
     }
 
     result
+}
+
+fn char_in_single_quoute(ch: char, options: &mut ParseCommandOptions) -> () {
+    match (ch, options.get_qoute() == "\'") {
+        ('\'', false) => options.set_active_qoute(ch),
+        ('\'', true) => options.reset_active_quoute(),
+        _ => options.push_to_current(ch),
+    }
+}
+
+fn char_in_double_quoutes(ch: char, options: &mut ParseCommandOptions) -> () {
+    match (ch, options.get_qoute() == "\"") {
+        ('\"', false) => options.set_active_qoute(ch),
+        ('\"', true) => options.reset_active_quoute(),
+        _ => options.push_to_current(ch),
+    }
 }
 
 fn try_in_path(argv: Vec<String>) -> () {

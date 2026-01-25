@@ -74,10 +74,6 @@ impl ExecuteOptions {
         }
     }
 
-    pub fn error_output(&self, text: &str) -> () {
-        println!("{}", text);
-    }
-
     pub fn standart_out(text: &str) -> () {
         print!("{text}");
         match stdout().flush() {

@@ -207,14 +207,13 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     let dir = Path::new(&path);
 
     let result: Result<std::process::Output, std::io::Error>;
-    if options.get_arguments().len() > 1 {
+    if options.get_arguments().len() > 0 {
         let arguments = options.get_arguments();
         result = Command::new(command_name)
-            .current_dir(dir)
             .args(&arguments[0..arguments.len()])
             .output();
     } else {
-        result = Command::new(command_name).current_dir(dir).output();
+        result = Command::new(command_name).output();
     }
 
     if result.is_ok() {

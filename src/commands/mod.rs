@@ -7,7 +7,6 @@ mod type_command;
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
     io::stdin,
-    path::Path,
     process::{Command, exit},
 };
 
@@ -195,17 +194,6 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
 
 fn try_in_path(options: &ExecuteOptions) -> () {
     let command_name = options.get_command_name();
-    let path: String = match type_command::search_in_path(command_name) {
-        Some(path) => path,
-        None => {
-            command_not_found(command_name);
-            return;
-        }
-    };
-
-    let path = path.replace(command_name, "");
-    let dir = Path::new(&path);
-
     let result: Result<std::process::Output, std::io::Error>;
     if options.get_arguments().len() > 0 {
         let arguments = options.get_arguments();
@@ -229,10 +217,6 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     } else {
         println!("{}", result.err().unwrap());
     }
-}
-
-fn command_not_found(text: &str) -> () {
-    println!("{text}: command not found")
 }
 
 fn string_from_u8(bytes: &Vec<u8>) -> String {

@@ -12,7 +12,7 @@ pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
         println!("provide command name to search for, ex. <type exit>");
         return;
     }
-    let command_name = argv[1];
+    let command_name = argv[1].as_str();
 
     match command_list.iter().find(|value| **value == command_name) {
         Some(command) => {

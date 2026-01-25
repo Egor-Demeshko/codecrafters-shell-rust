@@ -25,7 +25,7 @@ pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
     let found_path = match search_in_path(command_name) {
         Some(path) => path,
         None => {
-            println!("{command_name}: command not found");
+            println!("{command_name}: not found");
             return;
         }
     };

@@ -6,7 +6,7 @@ mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
-    io::{Write, stdin},
+    io::stdin,
     path::Path,
     process::{Command, exit},
 };
@@ -217,13 +217,15 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     }
 
     if result.is_ok() {
-        let mut text = String::new();
-        result
-            .unwrap()
-            .stdout
-            .iter()
-            .for_each(|byte| -> () { text.push(char::from(byte.clone())) });
-        options.output(text.as_str());
+        let result = result.unwrap();
+        let out = result.stdout;
+        let err = result.stderr;
+
+        if !err.is_empty() {
+            ExecuteOptions::standart_out(string_from_u8(&err).as_str());
+        } else {
+            options.output(string_from_u8(&out).as_str());
+        }
     } else {
         println!("{}", result.err().unwrap());
     }
@@ -231,4 +233,12 @@ fn try_in_path(options: &ExecuteOptions) -> () {
 
 fn command_not_found(text: &str) -> () {
     println!("{text}: command not found")
+}
+
+fn string_from_u8(bytes: &Vec<u8>) -> String {
+    let mut text = String::new();
+    bytes
+        .iter()
+        .for_each(|byte| -> () { text.push(char::from(byte.clone())) });
+    return text;
 }

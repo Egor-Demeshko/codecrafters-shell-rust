@@ -1,8 +1,7 @@
 use std::{
-    env,
     fs::File,
     io::{Write, stdout},
-    path::{MAIN_SEPARATOR, Path},
+    path::Path,
     process::exit,
 };
 

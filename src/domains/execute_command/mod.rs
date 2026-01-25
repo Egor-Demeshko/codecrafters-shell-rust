@@ -94,30 +94,29 @@ impl ExecuteOptions {
     }
 
     fn file_out(&self, text: &str, file_name: &str) -> () {
-        let dir_result = env::current_dir();
-        if dir_result.is_err() {
-            println!("{}", dir_result.err().unwrap());
-            return;
-        }
-        let dir_result = dir_result.unwrap();
-        let dir = dir_result.to_str().unwrap_or("");
-        let dir_path = Path::new(dir);
+        // let dir_result = env::current_dir();
+        // if dir_result.is_err() {
+        //     println!("{}", dir_result.err().unwrap());
+        //     return;
+        // }
+        // let dir_result = dir_result.unwrap();
+        // let dir: &str = dir_result.to_str().unwrap_or("");
+        // let dir_path = Path::new(dir);
 
-        // check if dir exists
-        if !dir_path.exists() {
-            let command_name = &self.get_command_name();
-            let empty_string = String::new();
-            let second_argument = self.get_argv().get(1).unwrap_or(&empty_string);
-            let error_message = format!(
-                "{}: {}: No such file or directory",
-                command_name, second_argument
-            );
-            println!("{}", error_message);
-            return;
-        }
-
-        let path_string = format!("{}{MAIN_SEPARATOR}{}", dir, file_name);
-        let path = Path::new(path_string.as_str());
+        // // check if dir exists
+        // if !dir_path.exists() {
+        //     let command_name = &self.get_command_name();
+        //     let empty_string = String::new();
+        //     let second_argument = self.get_argv().get(1).unwrap_or(&empty_string);
+        //     let error_message = format!(
+        //         "{}: {}: No such file or directory",
+        //         command_name, second_argument
+        //     );
+        //     println!("{}", error_message);
+        //     return;
+        // }
+        // let path_string = format!("{}{MAIN_SEPARATOR}{}", dir, file_name);
+        let path = Path::new(file_name);
         let mut fds = match File::create(path) {
             Ok(ds) => ds,
             Err(e) => {

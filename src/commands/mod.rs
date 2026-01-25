@@ -6,7 +6,7 @@ mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
-    io::stdin,
+    io::{Write, stdin},
     path::Path,
     process::{Command, exit},
 };
@@ -103,7 +103,7 @@ pub fn execute_command(options: ExecuteOptions) {
         TYPE_COMMAND => type_command::execute(&options, Vec::from(COMMAND_LIST)),
         PWD_COMMAND => pwd_command::execute(&options),
         CD_COMMAND => cd_command::execute(&options),
-        _ => try_in_path(options.get_argv()),
+        _ => try_in_path(&options),
     }
 }
 
@@ -193,12 +193,12 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
     }
 }
 
-fn try_in_path(argv: &Vec<String>) -> () {
-    let command_name = &argv[0];
-    let path: String = match type_command::search_in_path(command_name.as_str()) {
+fn try_in_path(options: &ExecuteOptions) -> () {
+    let command_name = options.get_command_name();
+    let path: String = match type_command::search_in_path(command_name) {
         Some(path) => path,
         None => {
-            command_not_found(command_name.as_str());
+            command_not_found(command_name);
             return;
         }
     };
@@ -206,18 +206,25 @@ fn try_in_path(argv: &Vec<String>) -> () {
     let path = path.replace(command_name, "");
     let dir = Path::new(&path);
 
-    let result: Result<std::process::ExitStatus, std::io::Error>;
-    if argv.len() > 1 {
+    let result: Result<std::process::Output, std::io::Error>;
+    if options.get_arguments().len() > 1 {
+        let arguments = options.get_arguments();
         result = Command::new(command_name)
             .current_dir(dir)
-            .args(&argv[1..argv.len()])
-            .status();
+            .args(&arguments[0..arguments.len()])
+            .output();
     } else {
-        result = Command::new(command_name).current_dir(dir).status();
+        result = Command::new(command_name).current_dir(dir).output();
     }
 
     if result.is_ok() {
-        return;
+        let mut text = String::new();
+        result
+            .unwrap()
+            .stdout
+            .iter()
+            .for_each(|byte| -> () { text.push(char::from(byte.clone())) });
+        options.output(text.as_str());
     } else {
         println!("{}", result.err().unwrap());
     }

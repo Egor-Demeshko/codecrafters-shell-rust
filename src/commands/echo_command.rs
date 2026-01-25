@@ -1,6 +1,7 @@
-use crate::helpers::output;
+use crate::domains::execute_command::ExecuteOptions;
 
-pub fn execute(argv: Vec<String>) -> () {
-    let text = argv[1..argv.len()].join(" ");
-    output(format!("{text}\n",).as_str());
+pub fn execute(options: &ExecuteOptions) -> () {
+    let arguments = options.get_arguments();
+    let text = arguments[0..arguments.len()].join(" ");
+    options.output(format!("{text}\n",).as_str());
 }

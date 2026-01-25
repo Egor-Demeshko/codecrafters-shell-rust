@@ -1,7 +1,10 @@
 use std::env;
 use std::path::Path;
 
-pub fn execute(argv: Vec<String>) -> () {
+use crate::domains::execute_command::ExecuteOptions;
+
+pub fn execute(options: &ExecuteOptions) -> () {
+    let argv = options.get_argv();
     if argv.len() <= 1 {
         println!("Missed path argument");
         return;

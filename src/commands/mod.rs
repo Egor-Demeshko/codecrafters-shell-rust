@@ -4,6 +4,7 @@ mod exit_command;
 mod pwd_command;
 mod type_command;
 
+use crate::domains::execute_command::ExecuteOptions;
 use std::{
     io::stdin,
     path::Path,
@@ -95,18 +96,18 @@ impl ParseCommand {
     }
 }
 
-pub fn execute_command(argv: Vec<String>) {
-    match argv[0].as_str() {
-        EXIT_COMMAND => exit_command::execute(127),
-        ECHO_COMMAND => echo_command::execute(argv),
-        TYPE_COMMAND => type_command::execute(argv, Vec::from(COMMAND_LIST)),
-        PWD_COMMAND => pwd_command::execute(),
-        CD_COMMAND => cd_command::execute(argv),
-        _ => try_in_path(argv),
+pub fn execute_command(options: ExecuteOptions) {
+    match options.get_command_name() {
+        EXIT_COMMAND => exit_command::execute(options.exit_code),
+        ECHO_COMMAND => echo_command::execute(&options),
+        TYPE_COMMAND => type_command::execute(&options, Vec::from(COMMAND_LIST)),
+        PWD_COMMAND => pwd_command::execute(&options),
+        CD_COMMAND => cd_command::execute(&options),
+        _ => try_in_path(options.get_argv()),
     }
 }
 
-pub fn get_command() -> Vec<String> {
+pub fn parse_command_entry() -> Vec<String> {
     let mut buffer = String::new();
     let command = match stdin().read_line(&mut buffer) {
         Ok(_) => buffer.trim().replace("''", "").replace("\"\"", ""),
@@ -192,7 +193,7 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
     }
 }
 
-fn try_in_path(argv: Vec<String>) -> () {
+fn try_in_path(argv: &Vec<String>) -> () {
     let command_name = &argv[0];
     let path: String = match type_command::search_in_path(command_name.as_str()) {
         Some(path) => path,

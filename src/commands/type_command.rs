@@ -1,4 +1,4 @@
-use crate::helpers::output;
+use crate::domains::execute_command::ExecuteOptions;
 use std::{
     env,
     fs::{self},
@@ -6,16 +6,17 @@ use std::{
     path::{MAIN_SEPARATOR, Path},
 };
 
-pub fn execute(argv: Vec<String>, command_list: Vec<&str>) -> () {
+pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
+    let argv: &Vec<String> = options.get_argv();
     if argv[1].is_empty() {
         println!("provide command name to search for, ex. <type exit>");
         return;
     }
-    let command_name = argv[1].as_str();
+    let command_name = options.get_command_name();
 
     match command_list.iter().find(|value| **value == command_name) {
         Some(command) => {
-            output(format!("{command} is a shell builtin\n").as_str());
+            options.output(format!("{command} is a shell builtin\n").as_str());
             return;
         }
         None => (),
@@ -29,7 +30,7 @@ pub fn execute(argv: Vec<String>, command_list: Vec<&str>) -> () {
         }
     };
 
-    output(format!("{} is {}\n", command_name, found_path.as_str()).as_str());
+    options.output(format!("{} is {}\n", command_name, found_path.as_str()).as_str());
 }
 
 pub fn search_in_path(command: &str) -> Option<String> {

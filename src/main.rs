@@ -1,12 +1,13 @@
 mod commands;
-mod helpers;
+mod domains;
 
-use commands::{execute_command, get_command};
-use helpers::output;
+use commands::{execute_command, parse_command_entry};
+use domains::execute_command::ExecuteOptions;
 
 fn main() {
     loop {
-        output("$ ");
-        execute_command(get_command());
+        ExecuteOptions::standart_out("$ ");
+        let execute_option = ExecuteOptions::new(parse_command_entry());
+        execute_command(execute_option);
     }
 }

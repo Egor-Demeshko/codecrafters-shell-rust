@@ -1,8 +1,10 @@
 use std::env;
 
-pub fn execute() -> () {
+use crate::domains::execute_command::ExecuteOptions;
+
+pub fn execute(options: &ExecuteOptions) -> () {
     match env::current_dir() {
-        Ok(path) => println!("{}", path.display()),
+        Ok(path) => options.output(format!("{}", path.display()).as_str()),
         Err(e) => eprintln!("{}", e),
     }
 }

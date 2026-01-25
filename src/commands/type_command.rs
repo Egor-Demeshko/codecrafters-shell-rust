@@ -14,7 +14,7 @@ pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
     }
     let command_name = argv[1].as_str();
 
-    match command_list.iter().find(|value| **value == command_name) {
+    match check_command_list(command_name, &command_list) {
         Some(command) => {
             options.output(format!("{command} is a shell builtin\n").as_str());
             return;
@@ -25,12 +25,24 @@ pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
     let found_path = match search_in_path(command_name) {
         Some(path) => path,
         None => {
-            println!("{command_name}: not found");
+            println!("{command_name}: command not found");
             return;
         }
     };
 
     options.output(format!("{} is {}\n", command_name, found_path.as_str()).as_str());
+}
+
+pub fn check_command_list<'a, 'b>(
+    command_name: &'a str,
+    command_list: &Vec<&'b str>,
+) -> Option<&'b str> {
+    let option = command_list.iter().find(|value| **value == command_name);
+    if option.is_some() {
+        Some(option.unwrap())
+    } else {
+        None
+    }
 }
 
 pub fn search_in_path(command: &str) -> Option<String> {

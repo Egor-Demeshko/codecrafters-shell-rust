@@ -194,6 +194,13 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
 
 fn try_in_path(options: &ExecuteOptions) -> () {
     let command_name = options.get_command_name();
+    match is_command_exists(command_name) {
+        Some(_) => (),
+        None => {
+            command_not_found(command_name);
+            return;
+        }
+    }
     let result: Result<std::process::Output, std::io::Error>;
     if options.get_arguments().len() > 0 {
         let arguments = options.get_arguments();
@@ -226,4 +233,20 @@ fn string_from_u8(bytes: &Vec<u8>) -> String {
         .iter()
         .for_each(|byte| -> () { text.push(char::from(byte.clone())) });
     return text;
+}
+
+fn command_not_found(text: &str) -> () {
+    println!("{text}: command not found")
+}
+
+fn is_command_exists(command_name: &str) -> Option<()> {
+    let command_list = Vec::from(COMMAND_LIST);
+    match type_command::check_command_list(command_name, &command_list) {
+        Some(_) => return Some(()),
+        None => (),
+    };
+    match type_command::search_in_path(command_name) {
+        Some(_) => Some(()),
+        None => None,
+    }
 }

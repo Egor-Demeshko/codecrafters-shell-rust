@@ -211,7 +211,8 @@ fn try_in_path(options: &ExecuteOptions) -> () {
 
         if !err.is_empty() {
             ExecuteOptions::standart_out(string_from_u8(&err).as_str());
-        } else {
+        }
+        if !out.is_empty() {
             options.output(string_from_u8(&out).as_str());
         }
     } else {

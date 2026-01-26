@@ -7,14 +7,21 @@ use std::{
 
 pub const ARROW: &str = ">";
 pub const UNIX_ARROW: &str = "1>";
+pub const UNIX_ERROR_ARROW: &str = "2>";
 
 pub enum OutputDestination {
     STANDART,
     FILE(String),
 }
 
+pub enum ErrorOutputDestination {
+    STANDART,
+    FILE(String),
+}
+
 pub struct ExecuteOptions {
     output_to: OutputDestination,
+    error_to: ErrorOutputDestination,
     argv: Vec<String>,
     arguments: Vec<String>,
     command: String,
@@ -23,9 +30,12 @@ pub struct ExecuteOptions {
 
 impl ExecuteOptions {
     pub fn new(argv: Vec<String>) -> Self {
-        let (command, arguments, destination) = ExecuteOptions::group_arguments(&argv);
+        let (command, arguments, destination, error_destination) =
+            ExecuteOptions::group_arguments(&argv);
+
         ExecuteOptions {
             output_to: destination,
+            error_to: error_destination,
             argv,
             exit_code: 127,
             command,
@@ -41,9 +51,17 @@ impl ExecuteOptions {
         &self.argv
     }
 
-    pub fn group_arguments(argv: &Vec<String>) -> (String, Vec<String>, OutputDestination) {
+    pub fn group_arguments(
+        argv: &Vec<String>,
+    ) -> (
+        String,
+        Vec<String>,
+        OutputDestination,
+        ErrorOutputDestination,
+    ) {
         // skip first as it's command name
         let mut destination: OutputDestination = OutputDestination::STANDART;
+        let mut error_destination: ErrorOutputDestination = ErrorOutputDestination::STANDART;
         let mut arguments = vec![];
         for i in 1..argv.len() {
             let mb_entry: Option<&String> = argv.get(i);
@@ -60,16 +78,34 @@ impl ExecuteOptions {
                 break;
             }
 
+            if entry == UNIX_ERROR_ARROW {
+                let empty_string = String::new();
+                let file = argv.get(i + 1).unwrap_or(&empty_string);
+                error_destination = ErrorOutputDestination::FILE(file.clone())
+            }
+
             arguments.push(entry.clone())
         }
 
-        (argv.get(0).unwrap().clone(), arguments, destination)
+        (
+            argv.get(0).unwrap().clone(),
+            arguments,
+            destination,
+            error_destination,
+        )
     }
 
     pub fn output(&self, text: &str) -> () {
         match &self.output_to {
             OutputDestination::STANDART => ExecuteOptions::standart_out(text),
             OutputDestination::FILE(file_name) => self.file_out(text, file_name.as_str()),
+        }
+    }
+
+    pub fn error_output(&self, text: &str) -> () {
+        match &self.error_to {
+            ErrorOutputDestination::STANDART => ExecuteOptions::standart_out(text),
+            ErrorOutputDestination::FILE(file_name) => self.file_out(text, file_name.as_str()),
         }
     }
 

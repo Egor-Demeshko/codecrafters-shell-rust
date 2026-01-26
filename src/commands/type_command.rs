@@ -9,7 +9,8 @@ use std::{
 pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
     let argv: &Vec<String> = options.get_argv();
     if argv[1].is_empty() {
-        println!("provide command name to search for, ex. <type exit>");
+        options
+            .error_output(format!("provide command name to search for, ex. <type exit>").as_str());
         return;
     }
     let command_name = argv[1].as_str();
@@ -25,7 +26,7 @@ pub fn execute(options: &ExecuteOptions, command_list: Vec<&str>) -> () {
     let found_path = match search_in_path(command_name) {
         Some(path) => path,
         None => {
-            println!("{command_name}: not found");
+            options.error_output(format!("{command_name}: not found").as_str());
             return;
         }
     };

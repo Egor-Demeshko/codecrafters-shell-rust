@@ -197,7 +197,7 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     match is_command_exists(command_name) {
         Some(_) => (),
         None => {
-            command_not_found(command_name);
+            command_not_found(command_name, &options);
             return;
         }
     }
@@ -217,7 +217,7 @@ fn try_in_path(options: &ExecuteOptions) -> () {
         let err = result.stderr;
 
         if !err.is_empty() {
-            ExecuteOptions::standart_out(string_from_u8(&err).as_str());
+            options.error_output(string_from_u8(&err).as_str());
         }
         if !out.is_empty() {
             options.output(string_from_u8(&out).as_str());
@@ -235,8 +235,8 @@ fn string_from_u8(bytes: &Vec<u8>) -> String {
     return text;
 }
 
-fn command_not_found(text: &str) -> () {
-    println!("{text}: command not found")
+fn command_not_found(text: &str, options: &ExecuteOptions) -> () {
+    options.error_output(format!("{text}: command not found\n").as_str());
 }
 
 fn is_command_exists(command_name: &str) -> Option<()> {

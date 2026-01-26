@@ -81,7 +81,8 @@ impl ExecuteOptions {
             if entry == UNIX_ERROR_ARROW {
                 let empty_string = String::new();
                 let file = argv.get(i + 1).unwrap_or(&empty_string);
-                error_destination = ErrorOutputDestination::FILE(file.clone())
+                error_destination = ErrorOutputDestination::FILE(file.clone());
+                break;
             }
 
             arguments.push(entry.clone())

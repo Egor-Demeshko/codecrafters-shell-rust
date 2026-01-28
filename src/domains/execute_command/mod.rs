@@ -1,5 +1,5 @@
 use std::{
-    fs::File,
+    fs::{File, exists},
     io::{Write, stdout},
     path::Path,
     process::exit,
@@ -8,10 +8,13 @@ use std::{
 pub const ARROW: &str = ">";
 pub const UNIX_ARROW: &str = "1>";
 pub const UNIX_ERROR_ARROW: &str = "2>";
+pub const APPEND_ARROW: &str = ">>";
+pub const APPEND_UNIX_ARROW: &str = "1>>";
 
 pub enum OutputDestination {
     STANDART,
     FILE(String),
+    APPEND(String),
 }
 
 pub enum ErrorOutputDestination {
@@ -85,6 +88,13 @@ impl ExecuteOptions {
                 break;
             }
 
+            if entry == APPEND_ARROW || entry == APPEND_UNIX_ARROW {
+                let empty_string = String::new();
+                // if we received output operator we await next argument will be filename
+                let file = argv.get(i + 1).unwrap_or(&empty_string);
+                destination = OutputDestination::APPEND(file.clone());
+            }
+
             arguments.push(entry.clone())
         }
 
@@ -100,6 +110,7 @@ impl ExecuteOptions {
         match &self.output_to {
             OutputDestination::STANDART => ExecuteOptions::standart_out(text),
             OutputDestination::FILE(file_name) => self.file_out(text, file_name.as_str()),
+            OutputDestination::APPEND(file_name) => self.append_to(text, file_name.as_str()),
         }
     }
 
@@ -139,5 +150,35 @@ impl ExecuteOptions {
         if result.is_err() {
             println!("{}", result.err().unwrap().to_string());
         }
+    }
+
+    fn append_to(&self, text: &str, file_name: &str) -> () {
+        let path = Path::new(file_name);
+        let exists = match exists(&path) {
+            Ok(bool) => bool,
+            Err(e) => {
+                println!("{}", e);
+                false
+            }
+        };
+        let mut options = File::options();
+        options.read(true).append(true);
+        if !exists {
+            options.create(true);
+        }
+        let mut fds = match options.open(path) {
+            Ok(ds) => ds,
+            Err(e) => {
+                self.error_output(e.to_string().as_str());
+                return;
+            }
+        };
+        match fds.write(text.as_bytes()) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                self.error_output(e.to_string().as_str());
+                0
+            }
+        };
     }
 }

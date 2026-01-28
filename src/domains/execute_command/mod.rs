@@ -1,5 +1,5 @@
 use std::{
-    fs::{File, exists},
+    fs::{File, create_dir_all, exists},
     io::{Write, stdout},
     path::Path,
     process::exit,
@@ -93,6 +93,7 @@ impl ExecuteOptions {
                 // if we received output operator we await next argument will be filename
                 let file = argv.get(i + 1).unwrap_or(&empty_string);
                 destination = OutputDestination::APPEND(file.clone());
+                break;
             }
 
             arguments.push(entry.clone())
@@ -153,7 +154,9 @@ impl ExecuteOptions {
     }
 
     fn append_to(&self, text: &str, file_name: &str) -> () {
-        let path = Path::new(file_name);
+        let path: &Path = Path::new(file_name);
+        self.ensure_dirs(&path);
+
         let exists = match exists(&path) {
             Ok(bool) => bool,
             Err(e) => {
@@ -169,16 +172,24 @@ impl ExecuteOptions {
         let mut fds = match options.open(path) {
             Ok(ds) => ds,
             Err(e) => {
-                self.error_output(e.to_string().as_str());
+                self.error_output(format!("{}\n", e).as_str());
                 return;
             }
         };
         match fds.write(text.as_bytes()) {
             Ok(bytes) => bytes,
             Err(e) => {
-                self.error_output(e.to_string().as_str());
+                self.error_output(format!("{}\n", e).as_str());
                 0
             }
         };
+    }
+
+    fn ensure_dirs(&self, path: &Path) -> () {
+        let parent = path.parent().unwrap();
+        let result = create_dir_all(parent);
+        if result.is_err() {
+            self.error_output("Unable to create folders");
+        }
     }
 }

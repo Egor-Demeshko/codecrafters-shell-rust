@@ -90,10 +90,7 @@ impl ExecuteOptions {
                 break;
             }
 
-            if entry == APPEND_ARROW
-                || entry == APPEND_UNIX_ARROW
-                || entry == APPEND_UNIX_ERROR_ARROW
-            {
+            if entry == APPEND_ARROW || entry == APPEND_UNIX_ARROW {
                 let empty_string = String::new();
                 // if we received output operator we await next argument will be filename
                 let file = argv.get(i + 1).unwrap_or(&empty_string);
@@ -136,6 +133,9 @@ impl ExecuteOptions {
     }
 
     pub fn standart_out(text: &str) -> () {
+        if text.is_empty() {
+            return;
+        }
         print!("{text}");
         match stdout().flush() {
             Ok(_) => return,

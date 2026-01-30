@@ -98,16 +98,15 @@ impl ExecuteOptions {
                 // if we received output operator we await next argument will be filename
                 let file = argv.get(i + 1).unwrap_or(&empty_string);
                 destination = OutputDestination::APPEND(file.clone());
-                error_destination = ErrorOutputDestination::APPEND(file.clone());
                 break;
             }
 
-            // if entry == APPEND_UNIX_ERROR_ARROW {
-            //     let empty_string = String::new();
-            //     let file = argv.get(i + 1).unwrap_or(&empty_string);
-            //     error_destination = ErrorOutputDestination::APPEND(file.clone());
-            //     break;
-            // }
+            if entry == APPEND_UNIX_ERROR_ARROW {
+                let empty_string = String::new();
+                let file = argv.get(i + 1).unwrap_or(&empty_string);
+                error_destination = ErrorOutputDestination::APPEND(file.clone());
+                break;
+            }
 
             arguments.push(entry.clone())
         }

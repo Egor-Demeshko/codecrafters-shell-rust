@@ -223,7 +223,7 @@ fn try_in_path(options: &ExecuteOptions) -> () {
             options.output(string_from_u8(&out).as_str());
         }
     } else {
-        println!("{}", result.err().unwrap());
+        options.error_output(format!("{}", result.err().unwrap()).as_str());
     }
 }
 

@@ -90,30 +90,34 @@ impl ExecuteOptions {
                 break;
             }
 
-            if entry == APPEND_ARROW || entry == APPEND_UNIX_ARROW {
+            if entry == APPEND_ARROW
+                || entry == APPEND_UNIX_ARROW
+                || entry == APPEND_UNIX_ERROR_ARROW
+            {
                 let empty_string = String::new();
                 // if we received output operator we await next argument will be filename
                 let file = argv.get(i + 1).unwrap_or(&empty_string);
                 destination = OutputDestination::APPEND(file.clone());
-                break;
-            }
-
-            if entry == APPEND_UNIX_ERROR_ARROW {
-                let empty_string = String::new();
-                let file = argv.get(i + 1).unwrap_or(&empty_string);
                 error_destination = ErrorOutputDestination::APPEND(file.clone());
                 break;
             }
 
+            // if entry == APPEND_UNIX_ERROR_ARROW {
+            //     let empty_string = String::new();
+            //     let file = argv.get(i + 1).unwrap_or(&empty_string);
+            //     error_destination = ErrorOutputDestination::APPEND(file.clone());
+            //     break;
+            // }
+
             arguments.push(entry.clone())
         }
 
-        (
-            argv.get(0).unwrap().clone(),
-            arguments,
-            destination,
-            error_destination,
-        )
+        let name = match argv.get(0) {
+            Some(name) => name,
+            None => &String::new(),
+        };
+
+        (name.clone(), arguments, destination, error_destination)
     }
 
     pub fn output(&self, text: &str) -> () {

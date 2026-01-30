@@ -8,6 +8,7 @@ use std::{
 pub const ARROW: &str = ">";
 pub const UNIX_ARROW: &str = "1>";
 pub const UNIX_ERROR_ARROW: &str = "2>";
+pub const APPEND_UNIX_ERROR_ARROW: &str = "2>>";
 pub const APPEND_ARROW: &str = ">>";
 pub const APPEND_UNIX_ARROW: &str = "1>>";
 
@@ -20,6 +21,7 @@ pub enum OutputDestination {
 pub enum ErrorOutputDestination {
     STANDART,
     FILE(String),
+    APPEND(String),
 }
 
 pub struct ExecuteOptions {
@@ -96,6 +98,13 @@ impl ExecuteOptions {
                 break;
             }
 
+            if entry == APPEND_UNIX_ERROR_ARROW {
+                let empty_string = String::new();
+                let file = argv.get(i + 1).unwrap_or(&empty_string);
+                error_destination = ErrorOutputDestination::APPEND(file.clone());
+                break;
+            }
+
             arguments.push(entry.clone())
         }
 
@@ -119,6 +128,7 @@ impl ExecuteOptions {
         match &self.error_to {
             ErrorOutputDestination::STANDART => ExecuteOptions::standart_out(text),
             ErrorOutputDestination::FILE(file_name) => self.file_out(text, file_name.as_str()),
+            ErrorOutputDestination::APPEND(file_name) => self.append_to(text, file_name.as_str()),
         }
     }
 

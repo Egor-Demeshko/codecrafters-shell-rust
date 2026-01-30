@@ -216,10 +216,15 @@ fn try_in_path(options: &ExecuteOptions) -> () {
         let out = result.stdout;
         let err = result.stderr;
 
-        if !err.is_empty() {
+        if err.is_empty() {
+            options.error_output("");
+        } else {
             options.error_output(string_from_u8(&err).as_str());
         }
-        if !out.is_empty() {
+
+        if out.is_empty() {
+            options.output("");
+        } else {
             options.output(string_from_u8(&out).as_str());
         }
     } else {

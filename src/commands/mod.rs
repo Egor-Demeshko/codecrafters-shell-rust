@@ -5,10 +5,7 @@ mod pwd_command;
 mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
-use std::{
-    io::stdin,
-    process::{Command, exit},
-};
+use std::process::Command;
 
 pub const TYPE_COMMAND: &str = "type";
 pub const EXIT_COMMAND: &str = "exit";
@@ -106,16 +103,8 @@ pub fn execute_command(options: ExecuteOptions) {
     }
 }
 
-pub fn parse_command_entry() -> Vec<String> {
-    let mut buffer = String::new();
-    let command = match stdin().read_line(&mut buffer) {
-        Ok(_) => buffer.trim().replace("''", "").replace("\"\"", ""),
-        Err(err) => {
-            println!("{err}");
-            exit(1);
-        }
-    };
-
+pub fn parse_command_entry(buffer: String) -> Vec<String> {
+    let command = buffer.trim().replace("''", "").replace("\"\"", "");
     let mut result = Vec::new();
     let mut parse_command = ParseCommand::new();
 

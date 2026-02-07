@@ -62,8 +62,14 @@ impl Hinter for ShellHinter {
     type Hint = String;
 
     fn hint(&self, line: &str, pos: usize, ctx: &Context<'_>) -> Option<Self::Hint> {
+        if pos == 0 {
+            return None;
+        }
         let command = self.command_trie.get_first_command(line);
         if command.is_empty() {
+            return None;
+        }
+        if command == line {
             return None;
         }
         Some(command)

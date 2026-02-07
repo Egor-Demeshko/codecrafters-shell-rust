@@ -1,5 +1,3 @@
-use std::io::{self, ErrorKind};
-
 use rustyline::{
     Changeset, Context, Helper, completion::Completer, error::ReadlineError,
     highlight::Highlighter, hint::Hinter, line_buffer::LineBuffer, validate::Validator,
@@ -37,15 +35,12 @@ impl Completer for ShellHinter {
     fn complete(
         &self,
         line: &str,
-        pos: usize,
-        ctx: &Context<'_>,
+        _: usize,
+        _: &Context<'_>,
     ) -> Result<(usize, Vec<Self::Candidate>), ReadlineError> {
         let mut command = self.command_trie.get_first_command(line);
         if command.is_empty() {
-            return Err(ReadlineError::Io(io::Error::new(
-                ErrorKind::NotFound,
-                "Not found",
-            )));
+            return Ok((0, vec![format!("{}{}", line, '\x07')]));
         }
         command.push(' ');
         Ok((0, vec![command]))
@@ -61,7 +56,7 @@ impl Completer for ShellHinter {
 impl Hinter for ShellHinter {
     type Hint = String;
 
-    fn hint(&self, line: &str, pos: usize, ctx: &Context<'_>) -> Option<Self::Hint> {
+    fn hint(&self, _: &str, _: usize, _: &Context<'_>) -> Option<Self::Hint> {
         return None;
         // if pos == 0 {
         //     return None;

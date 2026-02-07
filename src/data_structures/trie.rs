@@ -55,13 +55,23 @@ impl CommandTrie {
                     Some(node) => node,
                     None => break,
                 };
+                command.push(char);
             }
-            command.push(char);
         }
 
-        Self::till_end(current_node, &mut command);
+        if command.is_empty() {
+            return command;
+        }
 
-        command
+        if current_node.children.contains_key(&'*') {
+            return command;
+        }
+
+        if Self::till_end(current_node, &mut command) {
+            return command;
+        }
+
+        String::new()
     }
 
     pub fn till_end(node: &TrieNode, buffer: &mut String) -> bool {
@@ -78,6 +88,6 @@ impl CommandTrie {
                 return true;
             }
         }
-        return true;
+        return false;
     }
 }

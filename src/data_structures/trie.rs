@@ -56,9 +56,10 @@ impl CommandTrie {
                     None => break,
                 };
                 command.push(char);
+            } else {
+                return String::new();
             }
         }
-
         if command.is_empty() {
             return command;
         }

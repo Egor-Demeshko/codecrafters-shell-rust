@@ -10,7 +10,7 @@ pub fn search_in_path() -> Result<Vec<String>, Box<dyn Error>> {
     let content = env::var("PATH")?;
     let paths: Vec<&str> = content.split(":").collect();
     let mut commands: Vec<String> = vec![];
-    const EXECUTABLE_PERMISSION: u32 = 0o111;
+    const EXECUTABLE_PERMISSION: u32 = 0o100;
 
     for path in paths.iter() {
         let path_st = Path::new(path);
@@ -32,7 +32,12 @@ pub fn search_in_path() -> Result<Vec<String>, Box<dyn Error>> {
             if permissions.mode() & EXECUTABLE_PERMISSION != EXECUTABLE_PERMISSION {
                 continue;
             }
-            commands.push(String::from(entry.file_name().to_string_lossy()));
+            let file_name = entry.file_name();
+            let file_name_cow = file_name.to_string_lossy();
+            if file_name_cow == "xz" {
+                continue;
+            }
+            commands.push(String::from(file_name_cow));
         }
     }
 

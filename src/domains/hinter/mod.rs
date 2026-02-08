@@ -39,6 +39,7 @@ impl Completer for ShellHinter {
         _: &Context<'_>,
     ) -> Result<(usize, Vec<Self::Candidate>), ReadlineError> {
         let mut command = self.command_trie.get_first_command(line);
+        dbg!(&command);
         if command.is_empty() {
             return Ok((0, vec![format!("{}{}", line, '\x07')]));
         }

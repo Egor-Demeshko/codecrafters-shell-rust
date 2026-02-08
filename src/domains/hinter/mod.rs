@@ -16,9 +16,9 @@ impl ShellHinter {
         }
     }
 
-    pub fn set_commands(&mut self, list: Vec<&str>) {
+    pub fn set_commands(&mut self, list: Vec<String>) {
         for command in list.iter() {
-            self.command_trie.add_command(*command);
+            self.command_trie.add_command(command);
         }
     }
 }

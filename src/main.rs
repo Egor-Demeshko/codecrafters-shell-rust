@@ -7,12 +7,16 @@ use domains::execute_command::ExecuteOptions;
 use rustyline::{Editor, history::DefaultHistory};
 use std::process::exit;
 
-use crate::{commands::COMMAND_LIST, domains::hinter::ShellHinter};
+use crate::{
+    commands::COMMAND_LIST,
+    domains::{hinter::ShellHinter, search_command::gather_commands},
+};
 
 fn main() {
     let mut rl: Editor<ShellHinter, DefaultHistory> = Editor::new().unwrap();
     let mut helper = ShellHinter::new();
-    helper.set_commands(Vec::from(COMMAND_LIST));
+    let command_list: Vec<String> = gather_commands(COMMAND_LIST);
+    helper.set_commands(command_list);
     rl.set_helper(Some(helper));
 
     loop {

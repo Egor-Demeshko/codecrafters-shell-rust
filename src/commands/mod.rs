@@ -221,7 +221,7 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     }
 }
 
-fn string_from_u8(bytes: &Vec<u8>) -> String {
+pub fn string_from_u8(bytes: &Vec<u8>) -> String {
     let mut text = String::new();
     bytes
         .iter()

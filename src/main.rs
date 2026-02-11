@@ -4,7 +4,7 @@ mod domains;
 
 use commands::{execute_command, parse_command_entry};
 use domains::execute_command::ExecuteOptions;
-use rustyline::{Editor, history::DefaultHistory};
+use rustyline::{CompletionType, Config, Editor, history::DefaultHistory};
 use std::process::exit;
 
 use crate::{
@@ -13,7 +13,11 @@ use crate::{
 };
 
 fn main() {
-    let mut rl: Editor<ShellHinter, DefaultHistory> = Editor::new().unwrap();
+    let config = Config::builder()
+        .completion_type(CompletionType::List)
+        .completion_show_all_if_ambiguous(false)
+        .build();
+    let mut rl: Editor<ShellHinter, DefaultHistory> = Editor::with_config(config).unwrap();
     let mut helper = ShellHinter::new();
     let command_list: Vec<String> = gather_commands(COMMAND_LIST);
     helper.set_commands(command_list);

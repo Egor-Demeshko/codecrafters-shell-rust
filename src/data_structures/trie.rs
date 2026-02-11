@@ -45,10 +45,35 @@ impl CommandTrie {
         true
     }
 
-    pub fn get_first_command(&self, line: &str) -> String {
+    pub fn get_all_for_prefix(&self, line: &str) -> Vec<String> {
+        let (prefix, node) = self.get_prefix_node(line);
+        let mut commands: Vec<String> = vec![];
+        self.collect_commands(&mut commands, prefix, node);
+        commands
+    }
+
+    pub fn collect_commands(
+        &self,
+        command_list: &mut Vec<String>,
+        command: String,
+        next_node: &TrieNode,
+    ) -> () {
+        for (key, node) in next_node.children.iter() {
+            if *key == '*' || node.end == true {
+                command_list.push(command.clone());
+                continue;
+            }
+
+            let mut iteration_command: String = command.clone();
+            iteration_command.push(*key);
+
+            self.collect_commands(command_list, iteration_command, node);
+        }
+    }
+
+    pub fn get_prefix_node(&self, line: &str) -> (String, &TrieNode) {
         let mut command = String::new();
         let mut current_node: &TrieNode = &self.root;
-
         for char in line.chars() {
             if current_node.children.contains_key(&char) {
                 current_node = match current_node.children.get(&char) {
@@ -57,38 +82,10 @@ impl CommandTrie {
                 };
                 command.push(char);
             } else {
-                return String::new();
+                return (String::new(), current_node);
             }
         }
-        if command.is_empty() {
-            return command;
-        }
 
-        if current_node.children.contains_key(&'*') {
-            return command;
-        }
-
-        if Self::till_end(current_node, &mut command) {
-            return command;
-        }
-
-        String::new()
-    }
-
-    pub fn till_end(node: &TrieNode, buffer: &mut String) -> bool {
-        if node.end {
-            return true;
-        }
-
-        for (char, child_node) in node.children.iter() {
-            if *char == '*' {
-                return true;
-            }
-            buffer.push(*char);
-            if Self::till_end(child_node, buffer) {
-                return true;
-            }
-        }
-        return false;
+        (command, current_node)
     }
 }

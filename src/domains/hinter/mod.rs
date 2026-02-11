@@ -66,9 +66,9 @@ impl Completer for ShellHinter {
         self.increase_tab();
         let commands: Vec<String> = self.command_trie.get_all_for_prefix(line);
         if commands.is_empty() {
-            return Ok((0, vec![format!("{}{}\u{200B}", line, '\x07')]));
+            return Ok((0, vec![format!("{}{}", line, '\x07')]));
         } else if commands.len() == 1 {
-            return Ok((0, commands));
+            return Ok((0, vec![format!("{} ", commands.get(0).unwrap())]));
         }
         Ok((0, commands))
     }

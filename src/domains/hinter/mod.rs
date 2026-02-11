@@ -64,12 +64,13 @@ impl Completer for ShellHinter {
         _: &Context<'_>,
     ) -> Result<(usize, Vec<Self::Candidate>), ReadlineError> {
         self.increase_tab();
-        let commands: Vec<String> = self.command_trie.get_all_for_prefix(line);
+        let mut commands: Vec<String> = self.command_trie.get_all_for_prefix(line);
         if commands.is_empty() {
             return Ok((0, vec![format!("{}{}", line, '\x07')]));
         } else if commands.len() == 1 {
             return Ok((0, vec![format!("{} ", commands.get(0).unwrap())]));
         }
+        commands.sort();
         Ok((0, commands))
     }
 
@@ -85,16 +86,5 @@ impl Hinter for ShellHinter {
 
     fn hint(&self, _: &str, _: usize, _: &Context<'_>) -> Option<Self::Hint> {
         return None;
-        // if pos == 0 {
-        //     return None;
-        // }
-        // let command = self.command_trie.get_first_command(line);
-        // if command.is_empty() {
-        //     return None;
-        // }
-        // if command == line {
-        //     return None;
-        // }
-        // Some(command)
     }
 }

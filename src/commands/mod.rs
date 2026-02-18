@@ -96,45 +96,42 @@ impl ParseCommand {
 }
 
 pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
-    if options.pipes.len() == 0 {
+    if options.pipes.len() <= 1 {
         return Ok(run_single_command(options));
-    } else {
-        if options.pipes.len() == 1 {
-            return Ok(run_single_command(options));
-        }
-        let pipes = &options.pipes;
-        let mut children = Vec::new();
-        let mut previous_stdout = None;
-
-        for (i, cmd_option) in pipes.iter().enumerate() {
-            let mut command = get_command_from_option(cmd_option)?;
-
-            if let Some(stdout) = previous_stdout.take() {
-                command.stdin(stdout);
-            }
-
-            if i < pipes.len() - 1 {
-                command.stdout(Stdio::piped());
-            } else {
-                command.stdout(Stdio::inherit());
-            }
-            command.stderr(Stdio::inherit());
-
-            let mut child = command.spawn()?;
-
-            if i < pipes.len() - 1 {
-                previous_stdout = child.stdout.take();
-            }
-
-            children.push(child);
-        }
-
-        for mut child in children {
-            child.wait()?;
-        }
-
-        Ok(())
     }
+
+    let pipes = &options.pipes;
+    let mut children = Vec::new();
+    let mut previous_stdout = None;
+
+    for (i, cmd_option) in pipes.iter().enumerate() {
+        let mut command = get_command_from_option(cmd_option)?;
+
+        // Настройка stdin
+        if let Some(stdout) = previous_stdout.take() {
+            command.stdin(stdout);
+        }
+
+        if i < pipes.len() - 1 {
+            command.stdout(Stdio::piped());
+        } else {
+            command.stdout(Stdio::inherit());
+        }
+        command.stderr(Stdio::inherit());
+
+        let mut child = command.spawn()?;
+        if i < pipes.len() - 1 {
+            previous_stdout = child.stdout.take();
+        }
+
+        children.push(child);
+    }
+
+    for mut child in children {
+        child.wait()?;
+    }
+
+    Ok(())
 }
 
 pub fn run_single_command(options: ExecuteOptions) {

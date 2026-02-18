@@ -112,16 +112,23 @@ pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
             if let Some(stdout) = previous_stdout.take() {
                 command.stdin(stdout);
             }
+
             if i < pipes.len() - 1 {
                 command.stdout(Stdio::piped());
+            } else {
+                command.stdout(Stdio::inherit());
             }
+            command.stderr(Stdio::inherit());
+
             let mut child = command.spawn()?;
+
             if i < pipes.len() - 1 {
                 previous_stdout = child.stdout.take();
             }
 
             children.push(child);
         }
+
         for mut child in children {
             child.wait()?;
         }

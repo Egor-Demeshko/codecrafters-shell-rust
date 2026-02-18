@@ -41,7 +41,6 @@ impl ExecuteOptions {
     pub fn new(argv: Vec<String>) -> Self {
         let (command, arguments, destination, error_destination, pipes) =
             ExecuteOptions::group_arguments(&argv);
-        dbg!(pipes.len());
         ExecuteOptions {
             output_to: destination,
             error_to: error_destination,

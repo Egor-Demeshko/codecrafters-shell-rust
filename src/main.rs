@@ -28,7 +28,13 @@ fn main() {
         match readline {
             Ok(line) => {
                 let execute_option = ExecuteOptions::new(parse_command_entry(line));
-                execute_command(execute_option);
+                match execute_command(execute_option) {
+                    Ok(()) => exit(0),
+                    Err(message) => {
+                        println!("{message}");
+                        exit(1)
+                    }
+                }
             }
             Err(err) => {
                 println!("{err}");

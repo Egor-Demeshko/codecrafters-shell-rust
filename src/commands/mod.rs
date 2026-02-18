@@ -5,7 +5,10 @@ mod pwd_command;
 mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
-use std::process::Command;
+use std::{
+    io::{Error, ErrorKind},
+    process::{Command, Stdio},
+};
 
 pub const TYPE_COMMAND: &str = "type";
 pub const EXIT_COMMAND: &str = "exit";
@@ -92,7 +95,42 @@ impl ParseCommand {
     }
 }
 
-pub fn execute_command(options: ExecuteOptions) {
+pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
+    if options.pipes.len() == 0 {
+        return Ok(run_single_command(options));
+    } else {
+        if options.pipes.len() == 1 {
+            return Ok(run_single_command(options));
+        }
+        let pipes = &options.pipes;
+        let mut children = Vec::new();
+        let mut previous_stdout = None;
+
+        for (i, cmd_option) in pipes.iter().enumerate() {
+            let mut command = get_command_from_option(cmd_option)?;
+
+            if let Some(stdout) = previous_stdout.take() {
+                command.stdin(stdout);
+            }
+            if i < pipes.len() - 1 {
+                command.stdout(Stdio::piped());
+            }
+            let mut child = command.spawn()?;
+            if i < pipes.len() - 1 {
+                previous_stdout = child.stdout.take();
+            }
+
+            children.push(child);
+        }
+        for mut child in children {
+            child.wait()?;
+        }
+
+        Ok(())
+    }
+}
+
+pub fn run_single_command(options: ExecuteOptions) {
     match options.get_command_name() {
         EXIT_COMMAND => exit_command::execute(options.exit_code),
         ECHO_COMMAND => echo_command::execute(&options),
@@ -182,23 +220,7 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
 }
 
 fn try_in_path(options: &ExecuteOptions) -> () {
-    let command_name = options.get_command_name();
-    match is_command_exists(command_name) {
-        Some(_) => (),
-        None => {
-            command_not_found(command_name, &options);
-            return;
-        }
-    }
-    let result: Result<std::process::Output, std::io::Error>;
-    if options.get_arguments().len() > 0 {
-        let arguments = options.get_arguments();
-        result = Command::new(command_name)
-            .args(&arguments[0..arguments.len()])
-            .output();
-    } else {
-        result = Command::new(command_name).output();
-    }
+    let result = get_command_from_option(&options).unwrap().output();
 
     if result.is_ok() {
         let result = result.unwrap();
@@ -219,6 +241,30 @@ fn try_in_path(options: &ExecuteOptions) -> () {
     } else {
         options.error_output(format!("{}", result.err().unwrap()).as_str());
     }
+}
+
+fn get_command_from_option(options: &ExecuteOptions) -> Result<Command, Error> {
+    let command_name = options.get_command_name();
+    match is_command_exists(command_name) {
+        Some(_) => (),
+        None => {
+            command_not_found(command_name, &options);
+            return Err(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Команда '{}' не найдена", command_name),
+            ));
+        }
+    }
+
+    if options.get_arguments().len() > 0 {
+        let arguments = options.get_arguments();
+        let mut command = Command::new(command_name);
+
+        command.args(&arguments[0..arguments.len()]);
+        return Ok(command);
+    }
+
+    Ok(Command::new(command_name))
 }
 
 pub fn string_from_u8(bytes: &Vec<u8>) -> String {

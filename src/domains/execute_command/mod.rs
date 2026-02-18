@@ -11,13 +11,16 @@ pub const UNIX_ERROR_ARROW: &str = "2>";
 pub const APPEND_UNIX_ERROR_ARROW: &str = "2>>";
 pub const APPEND_ARROW: &str = ">>";
 pub const APPEND_UNIX_ARROW: &str = "1>>";
+pub const PIPE_OPERATOR: &str = "|";
 
+#[derive(Clone)]
 pub enum OutputDestination {
     STANDART,
     FILE(String),
     APPEND(String),
 }
 
+#[derive(Clone)]
 pub enum ErrorOutputDestination {
     STANDART,
     FILE(String),
@@ -31,13 +34,14 @@ pub struct ExecuteOptions {
     arguments: Vec<String>,
     command: String,
     pub exit_code: i32,
+    pub pipes: Vec<Self>,
 }
 
 impl ExecuteOptions {
     pub fn new(argv: Vec<String>) -> Self {
-        let (command, arguments, destination, error_destination) =
+        let (command, arguments, destination, error_destination, pipes) =
             ExecuteOptions::group_arguments(&argv);
-
+        dbg!(pipes.len());
         ExecuteOptions {
             output_to: destination,
             error_to: error_destination,
@@ -45,6 +49,7 @@ impl ExecuteOptions {
             exit_code: 127,
             command,
             arguments,
+            pipes,
         }
     }
 
@@ -63,11 +68,16 @@ impl ExecuteOptions {
         Vec<String>,
         OutputDestination,
         ErrorOutputDestination,
+        Vec<ExecuteOptions>,
     ) {
         // skip first as it's command name
-        let mut destination: OutputDestination = OutputDestination::STANDART;
-        let mut error_destination: ErrorOutputDestination = ErrorOutputDestination::STANDART;
-        let mut arguments = vec![];
+        let mut pipes: Vec<ExecuteOptions> = vec![];
+        let (mut destination, mut error_destination, mut arguments) =
+            Self::get_standart_for_grouping();
+        let name = match argv.get(0) {
+            Some(name) => name,
+            None => &String::new(),
+        };
         for i in 1..argv.len() {
             let mb_entry: Option<&String> = argv.get(i);
             if mb_entry.is_none() {
@@ -105,15 +115,51 @@ impl ExecuteOptions {
                 break;
             }
 
+            // work on pipes
+            if entry == PIPE_OPERATOR && (i != argv.len() - 1) && i != 1 {
+                pipes.push(ExecuteOptions {
+                    output_to: destination.clone(),
+                    error_to: error_destination.clone(),
+                    argv: argv.clone(),
+                    exit_code: 127,
+                    command: name.clone(),
+                    arguments: arguments.clone(),
+                    pipes: vec![],
+                });
+                (destination, error_destination, arguments) = Self::get_standart_for_grouping();
+                break;
+            }
+
             arguments.push(entry.clone())
         }
 
-        let name = match argv.get(0) {
-            Some(name) => name,
-            None => &String::new(),
-        };
+        // add last pipe if there were some
+        if pipes.len() > 0 {
+            pipes.push(ExecuteOptions {
+                output_to: destination.clone(),
+                error_to: error_destination.clone(),
+                argv: argv.clone(),
+                exit_code: 127,
+                command: name.clone(),
+                arguments: arguments.clone(),
+                pipes: vec![],
+            });
+        }
 
-        (name.clone(), arguments, destination, error_destination)
+        (
+            name.clone(),
+            arguments,
+            destination,
+            error_destination,
+            pipes,
+        )
+    }
+
+    pub fn get_standart_for_grouping() -> (OutputDestination, ErrorOutputDestination, Vec<String>) {
+        let destination: OutputDestination = OutputDestination::STANDART;
+        let error_destination: ErrorOutputDestination = ErrorOutputDestination::STANDART;
+        let arguments: Vec<String> = vec![];
+        (destination, error_destination, arguments)
     }
 
     pub fn output(&self, text: &str) -> () {

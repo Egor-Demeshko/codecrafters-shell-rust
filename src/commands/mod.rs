@@ -6,7 +6,7 @@ mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
-    io::{Error, ErrorKind},
+    io::{Error, ErrorKind, PipeReader, Read, pipe},
     process::{Command, Stdio},
 };
 
@@ -96,42 +96,49 @@ impl ParseCommand {
 }
 
 pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
-    if options.pipes.len() <= 1 {
+    if options.pipes.len() == 0 {
         return Ok(run_single_command(options));
-    }
-
-    let pipes = &options.pipes;
-    let mut children = Vec::new();
-    let mut previous_stdout = None;
-
-    for (i, cmd_option) in pipes.iter().enumerate() {
-        let mut command = get_command_from_option(cmd_option)?;
-
-        // Настройка stdin
-        if let Some(stdout) = previous_stdout.take() {
-            command.stdin(stdout);
+    } else {
+        if options.pipes.len() == 1 {
+            return Ok(run_single_command(options));
         }
+        let mut option_pipes = options.pipes;
+        let mut index: usize = 0;
+        let max: usize = option_pipes.len();
+        let mut previous_stdout = None;
 
-        if i < pipes.len() - 1 {
-            command.stdout(Stdio::piped());
-        } else {
-            command.stdout(Stdio::inherit());
+        for (index, option) in option_pipes.iter().enumerate() {
+            let mut command = get_command_from_option(&option).unwrap();
+
+            if let Some(stdout) = previous_stdout.take() {
+                command.stdin(stdout);
+            } else {
+                command.stdin(Stdio::inherit());
+            }
+            let (reader, writer) = pipe()?;
+
+            if index == option_pipes.len() - 1 {
+                command.stdout(Stdio::inherit());
+            } else {
+                command.stdout(writer);
+            }
+
+            command.stderr(Stdio::inherit());
+
+            let mut child = command.spawn()?;
+
+            if index < option_pipes.len() - 1 {
+                previous_stdout = Some(reader);
+            }
+
+            // Закрываем write_pipe в родителе, если это не последняя команда
+            // (write_pipe уже передан процессу, родитель не должен его использовать)
+
+            // Ждем завершения процесса
+            child.wait()?;
         }
-        command.stderr(Stdio::inherit());
-
-        let mut child = command.spawn()?;
-        if i < pipes.len() - 1 {
-            previous_stdout = child.stdout.take();
-        }
-
-        children.push(child);
+        Ok(())
     }
-
-    for mut child in children {
-        child.wait()?;
-    }
-
-    Ok(())
 }
 
 pub fn run_single_command(options: ExecuteOptions) {

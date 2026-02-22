@@ -117,11 +117,7 @@ pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
             }
             let (reader, writer) = pipe()?;
 
-            if index == option_pipes.len() - 1 {
-                command.stdout(Stdio::inherit());
-            } else {
-                command.stdout(writer);
-            }
+            command.stdout(writer);
 
             command.stderr(Stdio::inherit());
 

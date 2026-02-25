@@ -115,7 +115,7 @@ impl ExecuteOptions {
             }
 
             // work on pipes
-            if entry == PIPE_OPERATOR && (i != argv.len() - 1) && i != 1 {
+            if entry == PIPE_OPERATOR && (i != argv.len() - 1) {
                 pipes.push(ExecuteOptions {
                     output_to: destination.clone(),
                     error_to: error_destination.clone(),

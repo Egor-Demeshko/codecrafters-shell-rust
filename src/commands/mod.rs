@@ -7,7 +7,7 @@ mod type_command;
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
     io::{Error, ErrorKind, PipeReader, Read, pipe},
-    process::{Command, Stdio},
+    process::{Child, Command, Stdio},
 };
 
 pub const TYPE_COMMAND: &str = "type";
@@ -98,43 +98,41 @@ impl ParseCommand {
 pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
     if options.pipes.len() == 0 {
         return Ok(run_single_command(options));
-    } else {
-        if options.pipes.len() == 1 {
-            return Ok(run_single_command(options));
-        }
-        let mut option_pipes = options.pipes;
-        let mut index: usize = 0;
-        let max: usize = option_pipes.len();
-        let mut previous_stdout = None;
-
-        for (index, option) in option_pipes.iter().enumerate() {
-            let mut command = get_command_from_option(&option).unwrap();
-
-            if let Some(stdout) = previous_stdout.take() {
-                command.stdin(stdout);
-            } else {
-                command.stdin(Stdio::inherit());
-            }
-            let (reader, writer) = pipe()?;
-
-            command.stdout(writer);
-
-            command.stderr(Stdio::inherit());
-
-            let mut child = command.spawn()?;
-
-            if index < option_pipes.len() - 1 {
-                previous_stdout = Some(reader);
-            }
-
-            // Закрываем write_pipe в родителе, если это не последняя команда
-            // (write_pipe уже передан процессу, родитель не должен его использовать)
-
-            // Ждем завершения процесса
-            child.wait()?;
-        }
-        Ok(())
     }
+
+    let option_pipes = options.pipes;
+    let max: usize = option_pipes.len() - 1;
+    let mut previous_child: Option<Child> = None;
+
+    for (index, option) in option_pipes.iter().enumerate() {
+        let mut command = get_command_from_option(&option)?;
+
+        // Настраиваем stdin
+        if index == 0 {
+            command.stdin(Stdio::inherit());
+        } else if let Some(prev) = previous_child.take() {
+            command.stdin(prev.stdout.unwrap());
+        }
+
+        // Настраиваем stdout
+        if index == max {
+            command.stdout(Stdio::inherit());
+        } else {
+            command.stdout(Stdio::piped());
+        }
+
+        command.stderr(Stdio::inherit());
+
+        let child = command.spawn()?;
+
+        if index < max {
+            previous_child = Some(child);
+        } else {
+            let status = child.wait_with_output()?;
+        }
+    }
+
+    Ok(())
 }
 
 pub fn run_single_command(options: ExecuteOptions) {

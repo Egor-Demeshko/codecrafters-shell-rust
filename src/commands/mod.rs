@@ -107,13 +107,13 @@ pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
     for (index, option) in option_pipes.iter().enumerate() {
         let mut command = get_command_from_option(&option)?;
         let (ping_reader, ping_writer) = pipe()?;
-        let prev_reader = previous_reader.unwrap();
 
-        if index == 0 {
-            command.stdin(Stdio::inherit());
+        if previous_reader.is_some() {
+            command.stdin(previous_reader.unwrap());
         } else {
-            command.stdin(prev_reader);
+            command.stdin(Stdio::inherit());
         }
+
         command.stdout(ping_writer);
 
         let mut child = command.spawn()?;

@@ -6,8 +6,8 @@ mod type_command;
 
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
-    io::{Error, ErrorKind, PipeReader, Read, pipe},
-    process::{Child, Command, Stdio},
+    io::{Error, ErrorKind, PipeReader, pipe},
+    process::{Child, Command, Output, Stdio},
 };
 
 pub const TYPE_COMMAND: &str = "type";
@@ -102,34 +102,23 @@ pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
 
     let option_pipes = options.pipes;
     let max: usize = option_pipes.len() - 1;
-    let mut previous_child: Option<Child> = None;
+    let mut previous_reader: Option<PipeReader> = None;
 
     for (index, option) in option_pipes.iter().enumerate() {
         let mut command = get_command_from_option(&option)?;
+        let (ping_reader, ping_writer) = pipe()?;
+        let prev_reader = previous_reader.unwrap();
 
-        // Настраиваем stdin
         if index == 0 {
             command.stdin(Stdio::inherit());
-        } else if let Some(prev) = previous_child.take() {
-            command.stdin(prev.stdout.unwrap());
-        }
-
-        // Настраиваем stdout
-        if index == max {
-            command.stdout(Stdio::inherit());
         } else {
-            command.stdout(Stdio::piped());
+            command.stdin(prev_reader);
         }
+        command.stdout(ping_writer);
 
-        command.stderr(Stdio::inherit());
-
-        let child = command.spawn()?;
-
-        if index < max {
-            previous_child = Some(child);
-        } else {
-            let status = child.wait_with_output()?;
-        }
+        let mut child = command.spawn()?;
+        child.wait()?;
+        previous_reader = Some(ping_reader);
     }
 
     Ok(())

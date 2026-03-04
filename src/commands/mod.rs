@@ -234,7 +234,11 @@ fn char_in_double_quoutes(ch: char, options: &mut ParseCommand) -> () {
 }
 
 fn try_in_path(options: &ExecuteOptions) -> () {
-    let result = get_command_from_option(&options).unwrap().output();
+    let result = get_command_from_option(&options);
+    if result.is_err() {
+        return ();
+    }
+    let result = result.unwrap().output();
 
     if result.is_ok() {
         let result = result.unwrap();

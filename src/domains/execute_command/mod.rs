@@ -73,11 +73,14 @@ impl ExecuteOptions {
         let mut pipes: Vec<ExecuteOptions> = vec![];
         let (mut destination, mut error_destination, mut arguments) =
             Self::get_standart_for_grouping();
-        let name = match argv.get(0) {
+        let mut name = match argv.get(0) {
             Some(name) => name,
             None => &String::new(),
         };
-        for i in 1..argv.len() {
+        let mut i: usize = 1;
+        let len = argv.len();
+
+        while i < len {
             let mb_entry: Option<&String> = argv.get(i);
             if mb_entry.is_none() {
                 destination = OutputDestination::STANDART;
@@ -125,11 +128,17 @@ impl ExecuteOptions {
                     arguments: arguments.clone(),
                     pipes: vec![],
                 });
+                if let Some(next_is_name) = argv.get(i + 1) {
+                    name = next_is_name;
+
+                    i += 2;
+                }
                 (destination, error_destination, arguments) = Self::get_standart_for_grouping();
                 break;
             }
 
-            arguments.push(entry.clone())
+            arguments.push(entry.clone());
+            i += 1;
         }
 
         // add last pipe if there were some

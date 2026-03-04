@@ -7,7 +7,7 @@ mod type_command;
 use crate::domains::execute_command::ExecuteOptions;
 use std::{
     io::{Error, ErrorKind, PipeReader, pipe},
-    process::{Child, Command, Output, Stdio},
+    process::{Child, Command, Stdio},
 };
 
 pub const TYPE_COMMAND: &str = "type";
@@ -100,25 +100,45 @@ pub fn execute_command(options: ExecuteOptions) -> Result<(), std::io::Error> {
         return Ok(run_single_command(options));
     }
 
-    let option_pipes = options.pipes;
+    let option_pipes = &options.pipes;
     let max: usize = option_pipes.len() - 1;
     let mut previous_reader: Option<PipeReader> = None;
+    let mut jobs: Vec<Child> = vec![];
 
+    // pr (writer) => pipe => (rea)
     for (index, option) in option_pipes.iter().enumerate() {
         let mut command = get_command_from_option(&option)?;
-        let (ping_reader, ping_writer) = pipe()?;
+        let (reader, writer) = pipe()?;
 
-        if previous_reader.is_some() {
+        // последняя команда не используем читателя из pipe. ни писателя. но предыдущий читатель отправляет в команду
+        if index == max {
+            drop(reader);
+            drop(writer);
+            command.stdout(Stdio::inherit());
             command.stdin(previous_reader.unwrap());
+            previous_reader = None;
+        } else if index == 0 {
+            // когда берем первую команду, то читателя из pipe отправляем на след. круг. а писателя отправляем в комманду
+            previous_reader = Some(reader);
+            command.stdout(writer);
         } else {
-            command.stdin(Stdio::inherit());
+            // в процессах посередин мы прошлого читателя отправл во входной поток команды,
+            // писателя тоже отправля в процесс.
+            // а текущего читателя отправляем на след. круг
+            command.stdin(previous_reader.unwrap());
+            command.stdout(writer);
+            previous_reader = Some(reader);
         }
 
-        command.stdout(ping_writer);
+        jobs.push(command.spawn()?);
+    }
 
-        let mut child = command.spawn()?;
-        child.wait()?;
-        previous_reader = Some(ping_reader);
+    jobs.reverse();
+    for mut job in jobs {
+        let result = job.wait();
+        if result.is_err() {
+            options.error_output(result.err().unwrap().to_string().as_str());
+        }
     }
 
     Ok(())

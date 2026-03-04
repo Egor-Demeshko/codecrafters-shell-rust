@@ -29,7 +29,7 @@ fn main() {
             Ok(line) => {
                 let execute_option = ExecuteOptions::new(parse_command_entry(line));
                 match execute_command(execute_option) {
-                    Ok(()) => exit(0),
+                    Ok(()) => continue,
                     Err(message) => {
                         println!("{message}");
                         exit(1)
